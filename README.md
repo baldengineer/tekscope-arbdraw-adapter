@@ -84,33 +84,45 @@ ArbDraw is open:
 python -m python_bridge
 ```
 
-## Install from an ArbDraw source checkout
+## Standalone development
 
-Install both the generic bridge and the TekScope package into the same virtual
-environment. Reinstall the adapter after changing its `pyproject.toml` entry
-points or dependencies.
+This repository owns the adapter independently of
+[ArbDraw](https://github.com/baldengineer/arbdraw). Python 3.10 or newer is
+supported for the adapter alone. From this repository's root:
 
 ```powershell
+python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e .
-.\.venv\Scripts\python.exe -m pip install -e .\adapters\tekscope
-.\.venv\Scripts\python.exe -m pytest -q .\adapters\tekscope\tests
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py"
+.\.venv\Scripts\arbdraw-tekscope.exe --help
+```
+
+These tests use fake instruments and do not require ArbDraw or connected hardware.
+On macOS/Linux, use `.venv/bin/python` and `.venv/bin/arbdraw-tekscope`.
+
+## Use with an ArbDraw source checkout
+
+From the ArbDraw root, clone and install both packages in the same environment:
+
+```powershell
+git clone git@github.com:baldengineer/tekscope-arbdraw-adapter.git .\local_adapters\tekscope-arbdraw-adapter
+.\.venv\Scripts\python.exe -m pip install -e .
+.\.venv\Scripts\python.exe -m pip install -e .\local_adapters\tekscope-arbdraw-adapter
 .\.venv\Scripts\python.exe -m python_bridge --serve-app .
 ```
 
-Confirm both backends are registered without contacting hardware:
-
-```powershell
-.\.venv\Scripts\python.exe -c "from python_bridge.server import discover_adapters; print(sorted(discover_adapters()))"
-```
-
-The list should contain `tekscope-mso2` and `tekscope-mso6`.
+The bridge discovers both `tekscope-mso2` and `tekscope-mso6` using installed
+entry points. Pull updates with
+`git -C .\local_adapters\tekscope-arbdraw-adapter pull --ff-only` and restart
+the bridge. Reinstall after changing packaging metadata or dependencies.
+ArbDraw release builds consume an explicitly pinned adapter commit.
 
 ## Use from ArbDraw
 
 1. Select **TekScope MSO2 (files)** or **TekScope MSO6 (files)** in
    **AWG Profile** before creating or resizing the waveform.
 2. Set the sample count, frequency, high voltage, and low voltage.
-3. Choose **File → Send to AWG** and connect to
+3. Choose **File â†’ Send to AWG** and connect to
    `http://127.0.0.1:8876`.
 4. Select a discovered VISA resource or enter a bare scope IP address.
 5. Select **Identify (*IDN?)** and check that the model matches the profile.
@@ -205,5 +217,15 @@ causes an error. Replacement deletes that destination before writing it again.
   count when reporting the problem.
 
 The command and file-transfer evidence used by this adapter is maintained in
-[`skills/tekscope-file-commands/SKILL.md`](../../skills/tekscope-file-commands/SKILL.md).
+[`skills/tekscope-file-commands/SKILL.md`](skills/tekscope-file-commands/SKILL.md).
 
+
+## Repository origin
+
+Extracted from `baldengineer/arbdraw` at commit
+`59fc37c44856810c0dd15c6da3111ab8e2e84264` using an adapter-directory subtree
+split. Relevant adapter history and authorship are retained with new commit IDs.
+The protocol skill and MIT license were copied from that same revision; their
+earlier history remains in ArbDraw. Version 0.1.2 identifies the standalone
+packaging after the already released 0.1.1 bundle; instrument behavior is unchanged.
+Bridge dispatch integration tests now live in ArbDraw.

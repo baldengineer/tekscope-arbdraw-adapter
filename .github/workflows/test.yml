@@ -1,0 +1,28 @@
+name: Test standalone adapter
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.10', '3.12']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install adapter and build tools
+        run: python -m pip install -e . build twine
+      - name: Test source
+        run: python -m unittest discover -s tests -p 'test_*.py'
+      - name: Build and check distributions
+        run: |
+          python -m build
+          python -m twine check dist/*
+      - name: Verify installed wheel without ArbDraw
+        run: python scripts/check_distribution.py dist

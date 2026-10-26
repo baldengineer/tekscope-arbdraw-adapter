@@ -1,0 +1,2 @@
+recursive-include skills *.md
+recursive-include scripts *.py
